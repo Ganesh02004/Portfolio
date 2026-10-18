@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+next-env.d.ts
+*.tsbuildinfo
+
+# Environment — only .env.example and .env.docker (local defaults) are tracked
+.env
+.env.local
+.env.*.local
+.env.production
+.env.preview
+
+# Test output
+playwright-report/
+test-results/
+coverage/
+
+# Corporate TLS roots are machine-specific; see README "Networks that
+# intercept TLS". The directory itself is tracked via .gitkeep.
+docker/certs/*
+!docker/certs/.gitkeep
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json

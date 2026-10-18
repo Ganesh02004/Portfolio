@@ -1,0 +1,17 @@
+node_modules
+.next
+.git
+.gitignore
+playwright-report
+test-results
+coverage
+*.tsbuildinfo
+
+# Never ship environment files into an image; runtime env is injected.
+.env
+.env.local
+.env.*.local
+.env.production
+.env.docker
+
+# docker/certs IS required by the base stage and must not be ignored.

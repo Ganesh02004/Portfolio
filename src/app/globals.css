@@ -1,0 +1,220 @@
+@import 'tailwindcss';
+
+/* ===========================================================================
+   Design tokens
+   ---------------------------------------------------------------------------
+   One primary (deep navy), one accent (teal), one neutral ramp, and semantic
+   colours for feedback. Every pairing used for text on a background meets
+   WCAG AA at the size it is used; see docs/ACCESSIBILITY.md.
+
+   Typography uses a system stack rather than a webfont. It renders instantly,
+   needs no network request at build or run time, and keeps the strict
+   Content-Security-Policy in next.config.ts free of a font CDN. Hierarchy
+   comes from size, weight and letter-spacing instead of a second family.
+   =========================================================================== */
+
+@theme {
+  /* Brand ---------------------------------------------------------------- */
+  --color-navy-50: #f2f4fb;
+  --color-navy-100: #e3e7f6;
+  --color-navy-200: #c8d1ee;
+  --color-navy-300: #9dadde;
+  --color-navy-400: #6b80c7;
+  --color-navy-500: #4a5cae;
+  --color-navy-600: #3a4792;
+  --color-navy-700: #313a76;
+  --color-navy-800: #2b3260;
+  --color-navy-900: #1e2a5a;
+  --color-navy-950: #141b3c;
+
+  --color-teal-50: #eefbfa;
+  --color-teal-100: #d3f5f2;
+  --color-teal-200: #ace9e6;
+  --color-teal-300: #76d8d4;
+  --color-teal-400: #3bbdbb;
+  --color-teal-500: #1fa0a1;
+  --color-teal-600: #158082;
+  --color-teal-700: #146769;
+  --color-teal-800: #155255;
+  --color-teal-900: #154547;
+
+  /* Neutrals ------------------------------------------------------------- */
+  --color-ink-50: #f8f9fa;
+  --color-ink-100: #f1f3f5;
+  --color-ink-200: #e4e7eb;
+  --color-ink-300: #cdd3da;
+  --color-ink-400: #9aa5b1;
+  --color-ink-500: #6b7682;
+  --color-ink-600: #4d5760;
+  --color-ink-700: #3a424a;
+  --color-ink-800: #262c33;
+  --color-ink-900: #171b20;
+
+  /* Semantic ------------------------------------------------------------- */
+  --color-success-50: #ecfdf3;
+  --color-success-200: #abefc6;
+  --color-success-700: #067647;
+  --color-success-900: #054f31;
+
+  --color-warning-50: #fffaeb;
+  --color-warning-200: #fedf89;
+  --color-warning-700: #b54708;
+  --color-warning-900: #7a2e0e;
+
+  --color-danger-50: #fef3f2;
+  --color-danger-200: #fecdca;
+  --color-danger-700: #b42318;
+  --color-danger-900: #7a271a;
+
+  /* Typography ----------------------------------------------------------- */
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+  --font-mono:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  /* A restrained modular scale (~1.2) with explicit line heights. */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.5;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.6;
+  --text-base: 1rem;
+  --text-base--line-height: 1.7;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.6;
+  --text-xl: 1.3125rem;
+  --text-xl--line-height: 1.45;
+  --text-2xl: 1.5625rem;
+  --text-2xl--line-height: 1.35;
+  --text-3xl: 1.9375rem;
+  --text-3xl--line-height: 1.25;
+  --text-4xl: 2.4375rem;
+  --text-4xl--line-height: 1.15;
+  --text-5xl: 3rem;
+  --text-5xl--line-height: 1.08;
+
+  /* Elevation: two subtle levels only. */
+  --shadow-card: 0 1px 2px rgb(23 27 32 / 0.04), 0 1px 3px rgb(23 27 32 / 0.06);
+  --shadow-raised:
+    0 4px 6px -2px rgb(23 27 32 / 0.05), 0 12px 16px -4px rgb(23 27 32 / 0.1);
+
+  --radius-card: 0.75rem;
+
+  /* Content measure shared by every page section. */
+  --container-content: 72rem;
+  --container-prose: 44rem;
+}
+
+/* ===========================================================================
+   Base layer
+   =========================================================================== */
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-white);
+    color: var(--color-ink-800);
+    font-family: var(--font-sans);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Headings carry the display role: tighter tracking, heavier weight. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--color-ink-900);
+    font-weight: 650;
+    letter-spacing: -0.021em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* A single, unmistakable focus treatment everywhere. */
+  :focus-visible {
+    outline: 2px solid var(--color-teal-600);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Respect the OS reduced-motion setting rather than animating regardless. */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Native validation bubbles conflict with our inline error messages. */
+  input:invalid,
+  textarea:invalid,
+  select:invalid {
+    box-shadow: none;
+  }
+}
+
+/* ===========================================================================
+   Utilities
+   =========================================================================== */
+
+@utility container-content {
+  width: 100%;
+  max-width: var(--container-content);
+  margin-inline: auto;
+  padding-inline: 1rem;
+
+  @media (width >= 40rem) {
+    padding-inline: 1.5rem;
+  }
+
+  @media (width >= 64rem) {
+    padding-inline: 2rem;
+  }
+}
+
+/* Vertical rhythm for page sections, consistent across every route. */
+@utility section-y {
+  padding-block: 3.5rem;
+
+  @media (width >= 48rem) {
+    padding-block: 5rem;
+  }
+}
+
+/* Skip link: visually hidden until focused by keyboard. */
+@utility skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  z-index: 100;
+  border-radius: 0.5rem;
+  background-color: var(--color-navy-900);
+  padding: 0.75rem 1.25rem;
+  color: var(--color-white);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  transition: top 150ms ease;
+
+  &:focus {
+    top: 1rem;
+  }
+}

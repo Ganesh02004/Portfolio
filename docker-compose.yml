@@ -1,0 +1,125 @@
+# Development and local-verification stack.
+#
+#   docker compose --env-file .env.docker up
+#   docker compose --env-file .env.docker run --rm cli npx tsx scripts/create-staff.ts --help
+#
+# Values in .env.docker are local development defaults, not secrets.
+#
+# Postgres is the only stateful service. Uploaded presentations are stored in
+# it too, so there is no object store, no bucket and no volume to mount.
+
+name: business-services-platform
+
+x-app-env: &app-env
+  NODE_ENV: ${NODE_ENV:-development}
+  NEXT_TELEMETRY_DISABLED: '1'
+  NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+  DATABASE_URL: postgres://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+  DATABASE_ADMIN_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+  APP_DB_USER: ${APP_DB_USER}
+  APP_DB_PASSWORD: ${APP_DB_PASSWORD}
+  SESSION_COOKIE_SECRET: ${SESSION_COOKIE_SECRET}
+  DOWNLOAD_LINK_TTL_SECONDS: ${DOWNLOAD_LINK_TTL_SECONDS:-300}
+  NEXT_PUBLIC_MAX_PRESENTATION_MB: ${NEXT_PUBLIC_MAX_PRESENTATION_MB:-4}
+  SMTP_HOST: mail
+  SMTP_PORT: '1025'
+  SMTP_SECURE: 'false'
+  FROM_EMAIL: ${FROM_EMAIL}
+  NOTIFICATION_EMAIL: ${NOTIFICATION_EMAIL}
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+    ports:
+      - '${DB_PORT:-55432}:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # SMTP sink. Accepts every message and delivers none; read them at
+  # http://localhost:8025
+  mail:
+    image: axllent/mailpit:v1.21
+    restart: unless-stopped
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: '1'
+      MP_SMTP_AUTH_ALLOW_INSECURE: '1'
+    ports:
+      - '${MAIL_UI_PORT:-8025}:8025'
+      - '${MAIL_SMTP_PORT:-1025}:1025'
+
+  # One-shot: applies SQL migrations, provisions the least-privilege app login
+  # role, and seeds reference data.
+  migrate:
+    build:
+      context: .
+      target: tooling
+    environment: *app-env
+    command:
+      - sh
+      - -c
+      - 'npx tsx scripts/migrate.ts && npx tsx scripts/seed.ts'
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: 'no'
+
+  web:
+    build:
+      context: .
+      target: ${WEB_TARGET:-dev}
+    environment: *app-env
+    ports:
+      - '${WEB_PORT:-3000}:3000'
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./db:/app/db
+      - ./scripts:/app/scripts
+      - ./tests:/app/tests
+      - ./next.config.ts:/app/next.config.ts
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./postcss.config.mjs:/app/postcss.config.mjs
+      - web-next-cache:/app/.next
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
+
+  # Operational entry point for migrations, seeding and staff provisioning:
+  #   docker compose --env-file .env.docker run --rm cli \
+  #     npx tsx scripts/create-staff.ts --email you@example.com --name "Your Name" --role ADMIN
+  cli:
+    build:
+      context: .
+      target: tooling
+    environment: *app-env
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: ['tools']
+
+volumes:
+  db-data:
+  web-next-cache:

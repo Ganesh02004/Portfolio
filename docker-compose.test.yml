@@ -1,0 +1,78 @@
+# Isolated test stack. Runs format, lint, typecheck, unit, integration and E2E
+# checks against throwaway services on their own network, so a test run never
+# touches development data.
+#
+#   docker compose -f docker-compose.test.yml run --rm ci
+#
+# Every credential here is local to the ephemeral test network and is never
+# used outside it. The database lives in tmpfs and is discarded with the run.
+
+name: business-services-platform-test
+
+x-test-env: &test-env
+  NODE_ENV: test
+  CI: 'true'
+  NEXT_TELEMETRY_DISABLED: '1'
+  NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
+  DATABASE_URL: postgres://app_user:test_app_password@test-db:5432/business_services_test
+  DATABASE_ADMIN_URL: postgres://postgres:test_owner_password@test-db:5432/business_services_test
+  APP_DB_USER: app_user
+  APP_DB_PASSWORD: test_app_password
+  SESSION_COOKIE_SECRET: test-session-secret-at-least-32-characters-long
+  DOWNLOAD_LINK_TTL_SECONDS: '300'
+  NEXT_PUBLIC_MAX_PRESENTATION_MB: '4'
+  SMTP_HOST: test-mail
+  SMTP_PORT: '1025'
+  SMTP_SECURE: 'false'
+  FROM_EMAIL: no-reply@example.test
+  NOTIFICATION_EMAIL: team@example.test
+  E2E_STAFF_EMAIL: e2e-staff@example.test
+  E2E_STAFF_PASSWORD: e2e-staff-password-123
+  # The browser suite submits many forms and signs in repeatedly, which would
+  # legitimately trip the production limits. Rate limiting itself is verified
+  # at its real thresholds by tests/integration/storage-and-email.test.ts.
+  RATE_LIMIT_SUBMISSIONS_PER_HOUR: '500'
+  RATE_LIMIT_LOGIN_ATTEMPTS_PER_15_MIN: '500'
+
+services:
+  test-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: test_owner_password
+      POSTGRES_DB: business_services_test
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d business_services_test']
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  test-mail:
+    image: axllent/mailpit:v1.21
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: '1'
+      MP_SMTP_AUTH_ALLOW_INSECURE: '1'
+      MP_MAX_MESSAGES: '500'
+
+  # Full gate: format → lint → typecheck → migrate → unit → integration →
+  # build → e2e. See scripts/ci.sh.
+  ci:
+    build:
+      context: .
+      target: test
+    environment: *test-env
+    command: ['sh', 'scripts/ci.sh']
+    depends_on:
+      test-db:
+        condition: service_healthy
+      test-mail:
+        condition: service_started
+    volumes:
+      - test-reports:/app/playwright-report
+      - test-results:/app/test-results
+
+volumes:
+  test-reports:
+  test-results:
