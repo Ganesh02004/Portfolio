@@ -20,8 +20,8 @@ in this repository, because none were supplied.
 ### Organization identity
 `src/config/site.ts`
 
-- [ ] Registered business name → `siteConfig.name`
-- [ ] Logo (replaces the geometric placeholder in `src/components/layout/logo.tsx`)
+- [x] Registered business name → `siteConfig.name` (`Balaji Technologies`)
+- [x] Logo (replaces the geometric placeholder in `src/components/layout/logo.tsx`)
 - [ ] Domain and production URL → `NEXT_PUBLIC_SITE_URL`
 - [ ] Brand colours, if the navy/teal palette is not wanted → `src/app/globals.css`
 - [ ] Contact email → `siteConfig.contact.email`

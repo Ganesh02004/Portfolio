@@ -12,6 +12,7 @@ next-env.d.ts
 .env.*.local
 .env.production
 .env.preview
+vercel-import.env
 
 # Test output
 playwright-report/

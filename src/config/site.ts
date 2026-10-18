@@ -46,8 +46,8 @@ export interface SiteConfig {
 }
 
 export const siteConfig: SiteConfig = {
-  name: 'Business Services Platform',
-  shortName: 'BSP',
+  name: 'Balaji Technologies',
+  shortName: 'BT',
 
   tagline:
     'Training, startup, marketing and digitalization support for growing businesses',

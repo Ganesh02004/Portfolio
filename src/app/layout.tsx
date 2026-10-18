@@ -17,6 +17,18 @@ export const metadata: Metadata = {
     title: siteConfig.name,
     description: siteConfig.description,
     url: publicEnv.siteUrl,
+    images: [
+      {
+        url: '/images/logo.png',
+        width: 1670,
+        height: 524,
+        alt: siteConfig.name,
+      },
+    ],
+  },
+  icons: {
+    icon: '/icon.png',
+    apple: '/apple-icon.png',
   },
   robots: {
     // The admin portal is excluded from indexing at the robots level as well
